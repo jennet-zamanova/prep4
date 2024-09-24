@@ -1,3 +1,4 @@
+import assert from "assert";
 import { ObjectId } from "mongodb";
 import DocCollection, { BaseDoc } from "../framework/doc";
 import { BadValuesError, NotAllowedError, NotFoundError } from "./errors";
@@ -34,9 +35,12 @@ export default class AuthenticatingConcept {
 
   async getUserById(_id: ObjectId) {
     // TODO 1: implement this operation
-    //  - use this.users.readOne(..)
-    //  - don't include the password (we've provided a helper function you can use!)
-    throw new Error("Not implemented!");
+    this.assertUserExists(_id);
+    const response = await this.users.readOne({
+      _id: _id,
+    });
+    assert(response !== null);
+    return this.redactPassword(response);
   }
 
   async getUsers(username?: string) {
@@ -56,9 +60,16 @@ export default class AuthenticatingConcept {
 
   async updateUsername(_id: ObjectId, username: string) {
     // TODO 2: implement this operation
-    //  - use this.users.partialUpdateOne(..)
-    //  - maintain the invariant that usernames are unique (we've provided a helper function!)
-    throw new Error("Not implemented!");
+    this.assertUserExists(_id);
+    this.assertUsernameUnique(username);
+    return await this.users.partialUpdateOne(
+      {
+        _id: _id,
+      },
+      {
+        username: username,
+      },
+    );
   }
 
   async delete(_id: ObjectId) {
